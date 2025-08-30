@@ -1,0 +1,13 @@
+### Marcin connects
+WEBSOCKET ws://localhost:8080/demo?username=Marcin
+
+### Piotrek connects
+WEBSOCKET ws://localhost:8080/demo?username=Piotrek
+
+### Marcin says hello
+WEBSOCKET MESSAGE
+Cześć Piotrek!
+
+### Piotrek replies
+WEBSOCKET MESSAGE
+Hej Marcin!
