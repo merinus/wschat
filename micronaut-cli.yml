@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: com.pega.wschat
+testFramework: junit
+sourceLanguage: java
+buildTool: gradle
+features: [app-name, gradle, http-client-test, jackson-databind, jackson-xml, java, java-application, json-schema, json-schema-generator, json-schema-validation, junit, logback, management, micronaut-aot, micronaut-build, micronaut-http-validation, netty-server, properties, readme, serialization-jackson, serialization-jsonp, shade, static-resources, validation, websocket]
