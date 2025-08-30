@@ -31,7 +31,7 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     testImplementation("io.micronaut:micronaut-http-client")
     testImplementation("org.junit.jupiter:junit-jupiter")
-
+    implementation("io.micronaut.redis:micronaut-redis-lettuce")
 }
 
 
