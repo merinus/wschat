@@ -63,6 +63,8 @@ public class ChatSocket {
         streams.append(roomId, username, "<joined>", now());
         sendTo(session, new WsMessage("welcome", roomId, username, "connected", now()));
         broadcastToRoom(roomId, new WsMessage("join", roomId, username, "<joined>", now()));
+        //broadcaster.broadcastSync(json.writeValueAsString(message),
+        //        s -> roomId.equals(s.get("roomId", String.class)));
     }
 
     @OnMessage
@@ -106,14 +108,19 @@ public class ChatSocket {
         broadcastToRoom(roomId, new WsMessage("error", roomId, username, "session_error", now()));
     }
 
-    // ===== helpers =====
+
     private void broadcastToRoom(String roomId, WsMessage message) {
-        if (roomId == null) return;
-        Predicate<WebSocketSession> sameRoom =
-                s -> Objects.equals(roomId, s.get("roomId", String.class, null));
+        if (roomId == null || message == null) return;
+
+        java.util.function.Predicate<WebSocketSession> sameRoom =
+                s -> roomId.equals(s.get("roomId", String.class, null));
+
         try {
-            broadcaster.broadcastSync(json.writeValueAsString(message), sameRoom);
-        } catch (IOException ignored) { }
+            String payload = json.writeValueAsString(message);
+            broadcaster.broadcastSync(payload, sameRoom);
+        } catch (java.io.IOException ignored) {
+            // tu można zalogować błąd serializacji
+        }
     }
 
     private void sendTo(WebSocketSession session, WsMessage message) {

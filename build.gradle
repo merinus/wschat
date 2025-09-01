@@ -39,9 +39,9 @@ application {
     mainClass = "com.pega.wschat.Application"
 }
 java {
-    //sourceCompatibility = JavaVersion.toVersion("24")
-    //targetCompatibility = JavaVersion.toVersion("24")
-    toolchain { languageVersion = JavaLanguageVersion.of(24) }
+    sourceCompatibility = JavaVersion.toVersion("21")
+    targetCompatibility = JavaVersion.toVersion("21")
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
 }
 
 
