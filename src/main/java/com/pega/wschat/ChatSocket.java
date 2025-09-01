@@ -1,5 +1,6 @@
 package com.pega.wschat;
 
+import com.pega.wschat.ChatStreamService;
 import io.micronaut.websocket.CloseReason;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.QueryValue;
@@ -22,6 +23,8 @@ import java.util.regex.Pattern;
 @ServerWebSocket("/{room_id}")
 @Singleton
 
+
+
 public class ChatSocket {
 
     private static final Pattern USER_RE = Pattern.compile("^[A-Za-z0-9_-]{1,32}$");
@@ -32,13 +35,14 @@ public class ChatSocket {
 
     private final WebSocketBroadcaster broadcaster;
     private final JsonMapper json;
+    private final ChatStreamService streams;
 
-    // dla diagnostyki – kto jest w jakim pokoju
     private final ConcurrentHashMap<String, Set<WebSocketSession>> rooms = new ConcurrentHashMap<>();
 
-    public ChatSocket(WebSocketBroadcaster broadcaster, JsonMapper json) {
+    public ChatSocket(WebSocketBroadcaster broadcaster, JsonMapper json, ChatStreamService streams) {
         this.broadcaster = broadcaster;
         this.json = json;
+        this.streams = streams;
     }
 
     @OnOpen
@@ -56,6 +60,7 @@ public class ChatSocket {
         session.put("username", username);
         rooms.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
 
+        streams.append(roomId, username, "<joined>", now());
         sendTo(session, new WsMessage("welcome", roomId, username, "connected", now()));
         broadcastToRoom(roomId, new WsMessage("join", roomId, username, "<joined>", now()));
     }
@@ -64,16 +69,21 @@ public class ChatSocket {
     public void onMessage(byte[] payload,
                           WebSocketSession session,
                           @PathVariable("room_id") String roomId,
-                          @QueryValue("username") String username) {
+                          @QueryValue String username) {
         if (!session.isOpen()) return;
-        if (payload == null || payload.length == 0 || payload.length > maxMessageBytes) {
-            sendTo(session, new WsMessage("error", roomId, username, "invalid_or_too_big", now()));
+
+        if (payload == null || payload.length == 0) return;
+        if (payload.length > maxMessageBytes) {
+            sendJson(session, new WsMessage("error", roomId, username, "invalid_or_too_big", now()));
+            session.close(CloseReason.MESSAGE_TO_BIG);
             return;
         }
-        String text = new String(payload, StandardCharsets.UTF_8).trim();
-        if (text.isBlank()) return;
 
-        broadcastToRoom(roomId, new WsMessage("message", roomId, username, text, now()));
+        final String msg = new String(payload, java.nio.charset.StandardCharsets.UTF_8).trim();
+        if (msg.isBlank()) return;
+
+        streams.append(roomId, username, msg, now());
+        broadcastToRoom(roomId, new WsMessage("message", roomId, username, msg, now()));
     }
 
     @OnClose
@@ -85,6 +95,7 @@ public class ChatSocket {
             set.remove(session);
             if (set.isEmpty()) rooms.remove(roomId);
         }
+        streams.append(roomId, username, "<left>", now());
         broadcastToRoom(roomId, new WsMessage("leave", roomId, username, "<left>", now()));
     }
 
@@ -112,5 +123,12 @@ public class ChatSocket {
     }
 
     private static long now() { return Instant.now().toEpochMilli(); }
+
+    private void sendJson(WebSocketSession session, WsMessage message) {
+        try {
+            session.sendSync(json.writeValueAsString(message));
+        } catch (IOException ignored) {
+        }
+    }
 
 }
