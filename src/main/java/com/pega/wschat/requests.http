@@ -1,0 +1,15 @@
+### Marcin
+WEBSOCKET ws://localhost:8080/demo?username=Marcin
+
+### Piotr
+WEBSOCKET ws://localhost:8080/demo?username=Piotr
+
+### Marcin -> hi
+WEBSOCKET MESSAGE
+Cześć Piotr!
+
+### History
+GET http://localhost:8080/chat/demo
+
+### Health
+GET http://localhost:8080/health
