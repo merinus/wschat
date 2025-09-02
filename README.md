@@ -1,3 +1,42 @@
+# WS Chat (Micronaut + Redis Streams)
+
+## Running redis container:
+- docker run -d --name redis -p 6379:6379 redis:7-alpine
+
+## Ping:
+- docker exec -it redis redis-cli ping #expecting: PONG
+
+## Checking port listening
+- Test-NetConnection -ComputerName localhost -Port 6379
+
+## Chat realtime backend:
+- WebSocket: `ws://localhost:8080/{room_id}?username=...`
+- Record of history: **Redis Streams** (`chat:room:{room_id}`)
+- REST: `GET /chat/{room_id}` returns history
+- Dockerfile + **docker compose** (app + redis)
+- Health/metrics: `/health`, `/info` (Micronaut Management)
+
+## Requirements
+- **JDK 21** (LTS)
+- Docker Desktop (WSL2 for Windows)
+- (Dev) Redis locally via Docker: `docker run -d --name redis -p 6379:6379 redis:7-alpine`
+
+## Configuration
+Configuration in `application.yml` / `application.properties`:
+```yaml
+micronaut:
+  application:
+    name: wschat
+
+redis:
+  uri: ${REDIS_URI:`redis://localhost:6379`}
+
+chat:
+  maxMessageBytes: 4096
+  stream:
+    prefix: chat:room:
+    maxlen: 0
+
 ## Micronaut 4.9.3 Documentation
 
 - [User Guide](https://docs.micronaut.io/4.9.3/guide/index.html)
